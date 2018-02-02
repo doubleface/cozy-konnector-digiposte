@@ -42366,6 +42366,7 @@ function fetchBills(requiredFields) {
     return loginToken;
   }).then(function (loginToken) {
     log('info', 'The login token is ' + loginToken);
+    rq = request({ cheerio: false });
     // now posting login request
     return rq({
       uri: 'https://secure.digiposte.fr/login_check',
@@ -42382,9 +42383,13 @@ function fetchBills(requiredFields) {
         'login_plus[tokenCustomization]': '',
         'login_plus[isLoginPlus]': 1,
         'login_plus[_token]': loginToken
-      }
+      },
+      followAllRedirects: false,
+      resolveWithFullResponse: true
     });
-  }).then(function ($) {
+  }).then(function (response) {
+    console.log(response, 'response');
+    process.exit(0);
     if ($('#infoQuestion').length) {
       log('warn', $('.dgplusContainer').text().trim());
       return _this.terminate(errors.USER_ACTION_NEEDED);
