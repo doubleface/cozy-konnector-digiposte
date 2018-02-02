@@ -42331,7 +42331,7 @@ var _require = __webpack_require__(405),
     log = _require.log,
     saveFiles = _require.saveFiles,
     cozyClient = _require.cozyClient,
-    requestFactory = _require.requestFactory,
+    request = _require.request,
     errors = _require.errors;
 
 var _require2 = __webpack_require__(900),
@@ -42339,9 +42339,9 @@ var _require2 = __webpack_require__(900),
 
 var fulltimeout = Date.now() + 60 * 1000;
 var bb = __webpack_require__(36);
-var request = requestFactory();
-var j = request.jar();
-request = requestFactory({
+var rq = request();
+var j = rq.jar();
+rq = request({
   cheerio: true,
   json: false,
   jar: j
@@ -42357,7 +42357,7 @@ module.exports = new BaseKonnector(function (fields) {
 function fetchBills(requiredFields) {
   var _this = this;
 
-  return request('https://secure.digiposte.fr/identification-plus').then(function ($) {
+  return rq('https://secure.digiposte.fr/identification-plus').then(function ($) {
     // getting the login token in the login form
     var loginToken = $('#credentials_recover_account__token').val();
     if (loginToken === undefined) {
@@ -42367,7 +42367,7 @@ function fetchBills(requiredFields) {
   }).then(function (loginToken) {
     log('info', 'The login token is ' + loginToken);
     // now posting login request
-    return request({
+    return rq({
       uri: 'https://secure.digiposte.fr/login_check',
       qs: {
         isLoginPlus: 1
@@ -42400,6 +42400,7 @@ function fetchBills(requiredFields) {
     if (xsrfcookie) {
       xsrfToken = xsrfcookie.value;
     } else {
+      log('error', 'error body:');
       log('error', $.html());
       throw new Error('LOGIN_FAILED');
     }
@@ -42410,13 +42411,13 @@ function fetchBills(requiredFields) {
   }).then(function () {
     // Now get the access token
     log('info', 'Getting the app access token');
-    request = requestFactory();
-    request = request.defaults({
+    rq = request();
+    rq = rq.defaults({
       headers: {
         'X-XSRF-TOKEN': xsrfToken
       }
     });
-    return request('https://secure.digiposte.fr/rest/security/tokens');
+    return rq('https://secure.digiposte.fr/rest/security/tokens');
   }).then(function (body) {
     if (body && body.access_token) {
       accessToken = body.access_token;
@@ -42425,12 +42426,12 @@ function fetchBills(requiredFields) {
   }).then(function () {
     // Now get the list of folders
     log('info', 'Getting the list of folders');
-    request = request.defaults({
+    rq = rq.defaults({
       auth: {
         bearer: accessToken
       }
     });
-    return request('https://secure.digiposte.fr/api/v3/folders/safe');
+    return rq('https://secure.digiposte.fr/api/v3/folders/safe');
   }).then(function (body) {
     return fetchFolder(body, requiredFields.folderPath, fulltimeout);
   });
@@ -42470,7 +42471,7 @@ function fetchFolder(body, rootPath, timeout) {
       folders: folder.folders
     };
     log('info', folder.name + '...');
-    return request({
+    return rq({
       uri: 'https://secure.digiposte.fr/api/v3/documents/search',
       qs: {
         direction: 'DESCENDING',
